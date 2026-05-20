@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Flow</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍅</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS VARIABLES ===== */
+:root {
+  --bg: #0f0f1a;
+  --bg-card: #1a1a2e;
+  --bg-card-hover: #222240;
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-1: #6366f1;
+  --accent-2: #a855f7;
+  --accent-grad: linear-gradient(135deg, #6366f1, #a855f7);
+  --accent-grad-2: linear-gradient(135deg, #818cf8, #c084fc);
+  --border: #2a2a45;
+  --focus-color: #6366f1;
+  --break-color: #22c55e;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --max-width: 800px;
+  --header-height: 72px;
+}
+
+/* ===== LIGHT MODE ===== */
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --text: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+}
+
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background 0.4s ease, color 0.4s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-secondary)}
+
+/* ===== HEADER ===== */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: var(--transition);
+}
+
+.header-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-height);
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.logo-text {
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .tagline {
+    display: inline;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-icon {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.btn-icon:hover {
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.btn-primary {
+  background: var(--accent-grad);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-1);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+.btn-success:hover {
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-xs);
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== SECTION ===== */
+.section {
+  margin: 32px 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* ===== CARD ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===== TIMER ===== */
+.timer-card {
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.timer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent-grad);
+  transition: background 0.5s ease;
+}
+
+.timer-card[data-mode="break"]::before {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.timer-mode {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--focus-color);
+  transition: var(--transition);
+}
+
+.timer-card[data-mode="break"] .timer-mode {
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--break-color);
+}
+
+.timer-display {
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  margin: 12px 0 8px;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.5s ease;
+}
+
+.timer-card[data-mode="focus"] .timer-display {
+  color: var(--focus-color);
+}
+
+.timer-card[data-mode="break"] .timer-display {
+  color: var(--break-color);
+}
+
+.timer-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.timer-controls .btn {
+  min-width: 100px;
+}
+
+.timer-progress-ring {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.timer-progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.timer-progress-ring .bg-circle {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 4;
+}
+
+.timer-progress-ring .progress-circle {
+  fill: none;
+  stroke: var(--focus-color);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s ease, stroke 0.5s ease;
+}
+
+.timer-card[data-mode="break"] .progress-circle {
+  stroke: var(--break-color);
+}
+
+/* ===== TODO ===== */
+.todo-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.todo-input-row input {
+  flex: 1;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: var(--transition);
+}
+
+.todo-input-row input:focus {
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.todo-input-row input::placeholder {
+  color: var(--text-muted);
+}
+
+.todo-list {
+  list-style: none;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  animation: fadeIn 0.2s ease;
+}
+
+.todo-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.todo-item + .todo-item {
+  border-top: 1px solid var(--border);
+}
+
+.todo-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--text-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: var(--transition);
+}
+
+.todo-checkbox:checked {
+  border-color: var(--accent-1);
+  background: var(--accent-grad);
+}
+
+.todo-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 0.92rem;
+  color: var(--text);
+  word-break: break-word;
+  transition: var(--transition);
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.todo-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: var(--transition);
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.todo-item:hover .todo-delete {
+  opacity: 1;
+}
+
+.todo-delete:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.todo-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* ===== STATISTICS ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.stats-period-title {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  margin-bottom: -4px;
+}
+
+.stats-period-title:not(:first-child) {
+  margin-top: 16px;
+}
+
+.stat-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 16px;
+  text-align: center;
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  border-color: var(--accent-1);
+}
+
+.stat-number {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.stats-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 20px 0;
+}
+
+/* ===== SETTINGS ===== */
+.settings-panel {
+  display: none;
+}
+
+.settings-panel.open {
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+.settings-group {
+  margin-bottom: 20px;
+}
+
+.settings-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.settings-value {
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg);
+  padding: 2px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.85rem;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+  transition: var(--transition);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  transition: var(--transition);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* Toggle switch */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--border);
+  border-radius: 26px;
+  transition: var(--transition);
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--accent-grad);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+  background: #fff;
+}
+
+/* ===== KEYBOARD HINT ===== */
+.keyboard-hint {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.keyboard-hint kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-family: var(--font);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ===== FEATURE CARDS GRID (for responsive layout) ===== */
+.feature-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 500px; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes ring {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.timer-ringing .timer-display {
+  animation: pulse 0.5s ease-in-out 3;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 32px 24px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  margin-top: 48px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 480px) {
+  .timer-display {
+    font-size: 6rem;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --max-width: 720px;
+  }
+  .timer-display {
+    font-size: 7rem;
+  }
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .feature-grid .timer-card {
+    grid-column: 1 / -1;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --max-width: 960px;
+  }
+  .feature-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .feature-grid .timer-card {
+    grid-column: span 2;
+  }
+  .timer-display {
+    font-size: 7.5rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-inner">
+    <div class="logo-area">
+      <span class="logo-icon">🍅</span>
+      <div>
+        <span class="logo-text">Focus Flow</span>
+        <span class="tagline">&nbsp;&middot;&nbsp;Stay in the flow.</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main class="container">
+  <div class="feature-grid">
+
+    <!-- ===== POMODORO TIMER ===== -->
+    <section class="card timer-card" id="timerCard" data-mode="focus">
+      <div class="timer-mode" id="timerMode">FOCUS</div>
+
+      <div class="timer-progress-ring">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <circle class="bg-circle" cx="80" cy="80" r="70"></circle>
+          <circle class="progress-circle" id="progressCircle" cx="80" cy="80" r="70"
+            stroke-dasharray="439.82" stroke-dashoffset="0"></circle>
+        </svg>
+      </div>
+
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-label" id="timerLabel">Time to focus</div>
+
+      <div class="timer-controls">
+        <button class="btn btn-primary" id="startPauseBtn">▶ Start</button>
+        <button class="btn btn-secondary" id="resetBtn">↺ Reset</button>
+      </div>
+
+      <div class="keyboard-hint">
+        Press <kbd>Space</kbd> to start / pause
+      </div>
+    </section>
+
+    <!-- ===== TODO LIST ===== -->
+    <section class="card">
+      <div class="section-header">
+        <h2 class="section-title">Tasks</h2>
+        <span style="font-size:0.8rem;color:var(--text-muted)" id="remainingCount">0 remaining</span>
+      </div>
+
+      <div class="todo-input-row">
+        <input type="text" id="todoInput" placeholder="Add a new task..." maxlength="200" autocomplete="off">
+        <button class="btn btn-primary" id="addTodoBtn">+ Add</button>
+      </div>
+
+      <ul class="todo-list" id="todoList"></ul>
+
+      <div class="todo-count" id="emptyTodoMsg" style="display:block;">No tasks yet. Add one above!</div>
+    </section>
+
+    <!-- ===== STATISTICS ===== -->
+    <section class="card">
+      <div class="section-header">
+        <h2 class="section-title">Statistics</h2>
+        <button class="btn-icon" id="resetStatsBtn" aria-label="Reset statistics" title="Reset statistics">↻</button>
+      </div>
+
+      <div class="stats-grid" id="statsGrid">
+        <div class="stats-period-title">Today</div>
+        <div class="stat-card">
+          <div class="stat-number" id="todaySessions">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="todayTasks">0</div>
+          <div class="stat-label">Tasks Done</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="todayMinutes">0</div>
+          <div class="stat-label">Focus Min</div>
+        </div>
+
+        <div class="stats-period-title">All Time</div>
+        <div class="stat-card">
+          <div class="stat-number" id="allSessions">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="allTasks">0</div>
+          <div class="stat-label">Tasks Done</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="allMinutes">0</div>
+          <div class="stat-label">Focus Min</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS ===== -->
+    <section class="card">
+      <div class="section-header" style="cursor:pointer" id="settingsToggle">
+        <h2 class="section-title">⚙ Settings</h2>
+        <span style="color:var(--text-muted);font-size:0.8rem" id="settingsArrow">▼</span>
+      </div>
+
+      <div class="settings-panel" id="settingsPanel">
+        <div class="settings-group">
+          <div class="settings-label">
+            <span>Focus Duration</span>
+            <span class="settings-value" id="focusDurationDisplay">25 min</span>
+          </div>
+          <input type="range" id="focusDurationSlider" min="15" max="60" value="25" step="1">
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-label">
+            <span>Break Duration</span>
+            <span class="settings-value" id="breakDurationDisplay">5 min</span>
+          </div>
+          <input type="range" id="breakDurationSlider" min="3" max="15" value="5" step="1">
+        </div>
+
+        <div class="settings-group">
+          <div class="toggle-row">
+            <span class="toggle-label">Sound Notifications</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="soundToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  Focus Flow &mdash; Stay productive, stay in the flow. 🍅
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== DOM REFS =====
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+
+  const timerDisplay = $('#timerDisplay');
+  const timerMode = $('#timerMode');
+  const timerLabel = $('#timerLabel');
+  const timerCard = $('#timerCard');
+  const startPauseBtn = $('#startPauseBtn');
+  const resetBtn = $('#resetBtn');
+  const progressCircle = $('#progressCircle');
+  const themeToggle = $('#themeToggle');
+
+  const todoInput = $('#todoInput');
+  const addTodoBtn = $('#addTodoBtn');
+  const todoList = $('#todoList');
+  const remainingCount = $('#remainingCount');
+  const emptyTodoMsg = $('#emptyTodoMsg');
+
+  const focusSlider = $('#focusDurationSlider');
+  const breakSlider = $('#breakDurationSlider');
+  const focusDisplay = $('#focusDurationDisplay');
+  const breakDisplay = $('#breakDurationDisplay');
+  const soundToggle = $('#soundToggle');
+  const settingsToggle = $('#settingsToggle');
+  const settingsPanel = $('#settingsPanel');
+  const settingsArrow = $('#settingsArrow');
+
+  const todaySessions = $('#todaySessions');
+  const todayTasks = $('#todayTasks');
+  const todayMinutes = $('#todayMinutes');
+  const allSessions = $('#allSessions');
+  const allTasks = $('#allTasks');
+  const allMinutes = $('#allMinutes');
+  const resetStatsBtn = $('#resetStatsBtn');
+
+  // ===== CONSTANTS =====
+  const CIRCUMFERENCE = 2 * Math.PI * 70; // ~439.82
+
+  // ===== STATE =====
+  let state = {
+    // Timer
+    mode: 'focus',        // 'focus' | 'break'
+    running: false,
+    timeLeft: 25 * 60,    // seconds
+    totalTime: 25 * 60,
+    intervalId: null,
+    ringing: false,
+
+    // Settings
+    focusDuration: 25,    // minutes
+    breakDuration: 5,     // minutes
+    soundEnabled: true,
+
+    // Todos
+    todos: [],
+    todoIdCounter: 0,
+
+    // Stats
+    stats: {
+      today: { sessions: 0, tasksDone: 0, focusMinutes: 0 },
+      allTime: { sessions: 0, tasksDone: 0, focusMinutes: 0 }
+    },
+
+    // Theme
+    theme: 'dark',
+
+    // Track last stats date for daily reset
+    lastStatsDate: ''
+  };
+
+  // ===== LOCAL STORAGE =====
+  function saveState() {
+    try {
+      const data = {
+        mode: state.mode,
+        running: false, // never persist running — always start paused
+        timeLeft: state.timeLeft,
+        totalTime: state.totalTime,
+        focusDuration: state.focusDuration,
+        breakDuration: state.breakDuration,
+        soundEnabled: state.soundEnabled,
+        todos: state.todos,
+        todoIdCounter: state.todoIdCounter,
+        stats: state.stats,
+        theme: state.theme,
+        lastStatsDate: state.lastStatsDate
+      };
+      localStorage.setItem('focusFlowState', JSON.stringify(data));
+    } catch (e) {
+      // localStorage may be full or unavailable
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem('focusFlowState');
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (!data) return false;
+
+      state.mode = data.mode || 'focus';
+      state.timeLeft = typeof data.timeLeft === 'number' ? data.timeLeft : state.focusDuration * 60;
+      state.totalTime = typeof data.totalTime === 'number' ? data.totalTime : state.focusDuration * 60;
+      state.focusDuration = data.focusDuration || 25;
+      state.breakDuration = data.breakDuration || 5;
+      state.soundEnabled = data.soundEnabled !== false;
+      state.todos = Array.isArray(data.todos) ? data.todos : [];
+      state.todoIdCounter = data.todoIdCounter || 0;
+      state.stats = data.stats || { today: { sessions: 0, tasksDone: 0, focusMinutes: 0 }, allTime: { sessions: 0, tasksDone: 0, focusMinutes: 0 } };
+      state.theme = data.theme || 'dark';
+      state.lastStatsDate = data.lastStatsDate || '';
+      state.running = false; // never resume running
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ===== THEME =====
+  function applyTheme(theme) {
+    state.theme = theme;
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      themeToggle.textContent = '☀️';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      themeToggle.textContent = '🌙';
+    }
+    saveState();
+  }
+
+  function toggleTheme() {
+    applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+  }
+
+  // ===== STATISTICS =====
+  function resetDailyStatsIfNeeded() {
+    const today = new Date().toISOString().split('T')[0];
+    if (state.lastStatsDate !== today) {
+      state.stats.today = { sessions: 0, tasksDone: 0, focusMinutes: 0 };
+      state.lastStatsDate = today;
+      saveState();
+    }
+  }
+
+  function updateStatsUI() {
+    resetDailyStatsIfNeeded();
+    todaySessions.textContent = state.stats.today.sessions;
+    todayTasks.textContent = state.stats.today.tasksDone;
+    todayMinutes.textContent = state.stats.today.focusMinutes;
+    allSessions.textContent = state.stats.allTime.sessions;
+    allTasks.textContent = state.stats.allTime.tasksDone;
+    allMinutes.textContent = state.stats.allTime.focusMinutes;
+  }
+
+  function recordSessionCompleted(focusMinutes) {
+    resetDailyStatsIfNeeded();
+    state.stats.today.sessions += 1;
+    state.stats.today.focusMinutes += Math.round(focusMinutes);
+    state.stats.allTime.sessions += 1;
+    state.stats.allTime.focusMinutes += Math.round(focusMinutes);
+    updateStatsUI();
+    saveState();
+  }
+
+  function recordTaskDone() {
+    resetDailyStatsIfNeeded();
+    state.stats.today.tasksDone += 1;
+    state.stats.allTime.tasksDone += 1;
+    updateStatsUI();
+    saveState();
+  }
+
+  function resetStats() {
+    if (!confirm('Reset all statistics? This cannot be undone.')) return;
+    state.stats = {
+      today: { sessions: 0, tasksDone: 0, focusMinutes: 0 },
+      allTime: { sessions: 0, tasksDone: 0, focusMinutes: 0 }
+    };
+    state.lastStatsDate = new Date().toISOString().split('T')[0];
+    updateStatsUI();
+    saveState();
+  }
+
+  // ===== SOUND (Web Audio API beep) =====
+  let audioCtx = null;
+
+  function playBeep() {
+    if (!state.soundEnabled) return;
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      // Play a pleasant two-tone beep
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);       // C5
+      osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.3);
+
+      // Second pulse
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.25);
+      osc2.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.35); // G5
+
+      gain2.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.25);
+      gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.55);
+
+      osc2.start(audioCtx.currentTime + 0.25);
+      osc2.stop(audioCtx.currentTime + 0.55);
+    } catch (e) {
+      // Web Audio API not supported
+    }
+  }
+
+  // ===== TIMER =====
+  function setTimerMode(mode) {
+    state.mode = mode;
+    timerCard.setAttribute('data-mode', mode);
+    timerMode.textContent = mode === 'focus' ? 'FOCUS' : 'BREAK';
+    timerLabel.textContent = mode === 'focus' ? 'Time to focus' : 'Take a break';
+    updateProgressRing();
+  }
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function updateDisplay() {
+    timerDisplay.textContent = formatTime(state.timeLeft);
+  }
+
+  function updateProgressRing() {
+    const ratio = state.totalTime > 0 ? state.timeLeft / state.totalTime : 0;
+    const offset = CIRCUMFERENCE * (1 - ratio);
+    progressCircle.style.strokeDashoffset = offset;
+  }
+
+  function switchMode() {
+    if (state.mode === 'focus') {
+      // Session just completed
+      const focusMinutes = state.focusDuration;
+      recordSessionCompleted(focusMinutes);
+
+      // Switch to break
+      state.mode = 'break';
+      state.totalTime = state.breakDuration * 60;
+      state.timeLeft = state.totalTime;
+    } else {
+      // Switch to focus
+      state.mode = 'focus';
+      state.totalTime = state.focusDuration * 60;
+      state.timeLeft = state.totalTime;
+    }
+
+    setTimerMode(state.mode);
+    updateDisplay();
+    updateProgressRing();
+    saveState();
+
+    // Play sound
+    playBeep();
+
+    // Ringing animation
+    timerCard.classList.add('timer-ringing');
+    setTimeout(() => timerCard.classList.remove('timer-ringing'), 1500);
+  }
+
+  function tick() {
+    if (!state.running) return;
+    const elapsed = Math.floor((Date.now() - state.sessionStartTime) / 1000);
+    state.timeLeft = Math.max(0, state.totalTime - elapsed);
+    updateDisplay();
+    updateProgressRing();
+    saveState();
+
+    if (state.timeLeft <= 0) {
+      state.running = false;
+      startPauseBtn.textContent = '▶ Start';
+      clearInterval(state.intervalId);
+      state.intervalId = null;
+      switchMode();
+    }
+  }
+
+  function startTimer() {
+    if (state.ringing) return;
+    if (state.timeLeft <= 0) {
+      // Reset if at zero
+      state.timeLeft = state.totalTime;
+      updateDisplay();
+      updateProgressRing();
+    }
+    state.sessionStartTime = Date.now() - (state.totalTime - state.timeLeft) * 1000;
+    state.running = true;
+    startPauseBtn.textContent = '⏸ Pause';
+    state.intervalId = setInterval(tick, 200); // frequent check for drift-free accuracy
+    saveState();
+  }
+
+  function pauseTimer() {
+    state.running = false;
+    startPauseBtn.textContent = '▶ Resume';
+    if (state.intervalId) {
+      clearInterval(state.intervalId);
+      state.intervalId = null;
+    }
+    saveState();
+  }
+
+  function toggleTimer() {
+    if (state.running) {
+      pauseTimer();
+    } else {
+      startTimer();
+    }
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    state.mode = 'focus';
+    state.totalTime = state.focusDuration * 60;
+    state.timeLeft = state.totalTime;
+    setTimerMode('focus');
+    updateDisplay();
+    updateProgressRing();
+    startPauseBtn.textContent = '▶ Start';
+    timerCard.classList.remove('timer-ringing');
+    state.ringing = false;
+    saveState();
+  }
+
+  function updateTimerSettings() {
+    const wasRunning = state.running;
+    if (wasRunning) pauseTimer();
+    state.totalTime = state.mode === 'focus' ? state.focusDuration * 60 : state.breakDuration * 60;
+    state.timeLeft = state.totalTime;
+    updateDisplay();
+    updateProgressRing();
+    saveState();
+  }
+
+  // ===== TODOS =====
+  function renderTodos() {
+    todoList.innerHTML = '';
+    const remaining = state.todos.filter(t => !t.done).length;
+    const total = state.todos.length;
+
+    if (total === 0) {
+      emptyTodoMsg.style.display = 'block';
+      remainingCount.textContent = '0 remaining';
+    } else {
+      emptyTodoMsg.style.display = 'none';
+      remainingCount.textContent = `${remaining} remaining`;
+    }
+
+    state.todos.forEach(todo => {
+      const li = document.createElement('li');
+      li.className = 'todo-item' + (todo.done ? ' completed' : '');
+      li.dataset.id = todo.id;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'todo-checkbox';
+      checkbox.checked = todo.done;
+      checkbox.addEventListener('change', () => toggleTodo(todo.id));
+
+      const text = document.createElement('span');
+      text.className = 'todo-text';
+      text.textContent = todo.text;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'todo-delete';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete task';
+      delBtn.addEventListener('click', () => deleteTodo(todo.id));
+
+      li.appendChild(checkbox);
+      li.appendChild(text);
+      li.appendChild(delBtn);
+      todoList.appendChild(li);
+    });
+  }
+
+  function addTodo() {
+    const text = todoInput.value.trim();
+    if (!text) return;
+    state.todos.push({
+      id: ++state.todoIdCounter,
+      text: text,
+      done: false,
+      createdAt: Date.now()
+    });
+    todoInput.value = '';
+    renderTodos();
+    saveState();
+    todoInput.focus();
+  }
+
+  function toggleTodo(id) {
+    const todo = state.todos.find(t => t.id === id);
+    if (!todo) return;
+    const wasCompleted = todo.done;
+    todo.done = !todo.done;
+
+    // If marking as done, record stat
+    if (!wasCompleted && todo.done) {
+      recordTaskDone();
+    }
+
+    renderTodos();
+    saveState();
+  }
+
+  function deleteTodo(id) {
+    state.todos = state.todos.filter(t => t.id !== id);
+    renderTodos();
+    saveState();
+  }
+
+  // ===== SETTINGS UI =====
+  function updateSettingsDisplay() {
+    focusDisplay.textContent = `${state.focusDuration} min`;
+    breakDisplay.textContent = `${state.breakDuration} min`;
+    focusSlider.value = state.focusDuration;
+    breakSlider.value = state.breakDuration;
+    soundToggle.checked = state.soundEnabled;
+  }
+
+  // ===== INIT =====
+  function init() {
+    // Load saved state
+    const saved = loadState();
+
+    if (!saved) {
+      // First time — set defaults
+      state.timeLeft = state.focusDuration * 60;
+      state.totalTime = state.focusDuration * 60;
+      state.lastStatsDate = new Date().toISOString().split('T')[0];
+      // Check system preference for theme
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        state.theme = 'light';
+      }
+    }
+
+    // Apply theme
+    applyTheme(state.theme);
+
+    // Ensure timeLeft/totalTime are consistent
+    if (state.mode === 'focus') {
+      state.totalTime = state.focusDuration * 60;
+    } else {
+      state.totalTime = state.breakDuration * 60;
+    }
+    // If timeLeft is out of bounds, reset it
+    if (state.timeLeft < 0 || state.timeLeft > state.totalTime) {
+      state.timeLeft = state.totalTime;
+    }
+
+    // Set timer UI
+    setTimerMode(state.mode);
+    updateDisplay();
+    updateProgressRing();
+
+    // Set settings UI
+    updateSettingsDisplay();
+
+    // Render todos
+    renderTodos();
+
+    // Update stats
+    resetDailyStatsIfNeeded();
+    updateStatsUI();
+
+    // Theme toggle
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // Timer controls
+    startPauseBtn.addEventListener('click', toggleTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        e.preventDefault();
+        toggleTimer();
+      }
+    });
+
+    // Todo controls
+    addTodoBtn.addEventListener('click', addTodo);
+    todoInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addTodo();
+    });
+
+    // Settings
+    focusSlider.addEventListener('input', () => {
+      state.focusDuration = parseInt(focusSlider.value, 10);
+      focusDisplay.textContent = `${state.focusDuration} min`;
+      if (state.mode === 'focus') {
+        updateTimerSettings();
+      } else {
+        saveState();
+      }
+    });
+
+    breakSlider.addEventListener('input', () => {
+      state.breakDuration = parseInt(breakSlider.value, 10);
+      breakDisplay.textContent = `${state.breakDuration} min`;
+      if (state.mode === 'break') {
+        updateTimerSettings();
+      } else {
+        saveState();
+      }
+    });
+
+    soundToggle.addEventListener('change', () => {
+      state.soundEnabled = soundToggle.checked;
+      saveState();
+    });
+
+    // Settings toggle visibility
+    settingsToggle.addEventListener('click', () => {
+      const isOpen = settingsPanel.classList.toggle('open');
+      settingsArrow.textContent = isOpen ? '▲' : '▼';
+    });
+
+    // Reset stats
+    resetStatsBtn.addEventListener('click', resetStats);
+
+    // Save on page leave
+    window.addEventListener('beforeunload', saveState);
+
+    console.log('🍅 Focus Flow loaded');
+  }
+
+  // Start when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>

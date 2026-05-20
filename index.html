@@ -866,10 +866,10 @@ body {
 
       <!-- Controls -->
       <div class="timer-controls">
-        <button class="btn btn-primary" id="timerStartPause" aria-label="Start or pause timer">
+        <button type="button" class="btn btn-primary" id="timerStartPause" aria-label="Start or pause timer">
           ▶ Start
         </button>
-        <button class="btn btn-secondary" id="timerReset" aria-label="Reset timer">
+        <button type="button" class="btn btn-secondary" id="timerReset" aria-label="Reset timer">
           ↺ Reset
         </button>
       </div>
@@ -894,7 +894,7 @@ body {
         placeholder="Add a new task…"
         autocomplete="off"
       />
-      <button class="btn btn-primary todo-add-btn" id="todoAddBtn" aria-label="Add task">+ Add</button>
+      <button type="button" class="btn btn-primary todo-add-btn" id="todoAddBtn" aria-label="Add task">+ Add</button>
     </div>
 
     <ul class="todo-list" id="todoList" role="list">
@@ -918,7 +918,7 @@ body {
         <span class="section-title-icon" aria-hidden="true">📊</span>
         Statistics
       </h2>
-      <button class="btn btn-danger stats-reset-btn" id="statsResetBtn" aria-label="Reset all statistics">Reset</button>
+      <button type="button" class="btn btn-danger stats-reset-btn" id="statsResetBtn" aria-label="Reset all statistics">Reset</button>
     </div>
 
     <div class="stats-grid">
@@ -962,7 +962,7 @@ body {
         <span class="section-title-icon" aria-hidden="true">⚙️</span>
         Settings
       </h2>
-      <button class="settings-toggle" id="settingsToggle" aria-label="Toggle settings panel" aria-expanded="false">
+      <button type="button" class="settings-toggle" id="settingsToggle" aria-label="Toggle settings panel" aria-expanded="false">
         <span>Configure</span>
         <span class="arrow" aria-hidden="true">▼</span>
       </button>
@@ -1394,7 +1394,6 @@ function playBeep() {
 
 // ---- Todo: Render ----
 function renderTodos() {
-  // Clear
   todoList.innerHTML = '';
 
   if (state.todos.length === 0) {
@@ -1404,14 +1403,13 @@ function renderTodos() {
   }
 
   todoEmpty.style.display = 'none';
-
   const remaining = state.todos.filter(t => !t.done).length;
   todoCount.textContent = `${remaining} remaining`;
 
   state.todos.forEach(todo => {
     const li = document.createElement('li');
     li.className = 'todo-item';
-    li.setAttribute('role', 'listitem');
+    li.dataset.todoId = todo.id;
 
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -1420,9 +1418,8 @@ function renderTodos() {
     cb.setAttribute('aria-label', `Mark "${todo.text}" as ${todo.done ? 'incomplete' : 'complete'}`);
     cb.addEventListener('change', () => {
       todo.done = cb.checked;
-      textEl.classList.toggle('done', todo.done);
-      updateTodoStats();
       renderTodos();
+      updateTodoStats(true);
       saveState();
     });
 
@@ -1432,6 +1429,7 @@ function renderTodos() {
     textEl.textContent = todo.text;
 
     const delBtn = document.createElement('button');
+    delBtn.type = 'button';
     delBtn.className = 'todo-delete-btn';
     delBtn.textContent = '✕';
     delBtn.setAttribute('aria-label', `Delete "${todo.text}"`);
@@ -1467,18 +1465,13 @@ function addTodo() {
 }
 
 // ---- Todo: Stats helper ----
-function updateTodoStats() {
+function updateTodoStats(isCheckToggle) {
   const doneCount = state.todos.filter(t => t.done).length;
-  // Track how many tasks are done today
   state.stats.todayTasks = doneCount;
-  // For all-time total: we store a separate accumulation counter
-  // totalTasks is the peak value of todayTasks seen (capped at current)
-  if (!state.stats._tasksAccum) state.stats._tasksAccum = state.stats.totalTasks;
-  // Update the accumulated total if new tasks were completed
-  if (doneCount > state.stats._tasksAccum) {
-    state.stats._tasksAccum = doneCount;
+  // For all-time: only count UP, never down
+  if (isCheckToggle) {
+    state.stats.totalTasks = Math.max(state.stats.totalTasks, doneCount);
   }
-  state.stats.totalTasks = Math.max(state.stats._tasksAccum, doneCount);
   updateStatsDisplay();
   saveState();
 }
@@ -1610,6 +1603,15 @@ settingsToggle.addEventListener('click', toggleSettings);
 focusDuration.addEventListener('input', onFocusDurationChange);
 breakDuration.addEventListener('input', onBreakDurationChange);
 soundToggle.addEventListener('change', onSoundToggle);
+
+// Save state on tab close
+window.addEventListener('beforeunload', () => {
+  if (state.running) {
+    state.running = false;
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    saveState();
+  }
+});
 
 // ---- Boot ----
 document.addEventListener('DOMContentLoaded', init);

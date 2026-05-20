@@ -1468,18 +1468,18 @@ function addTodo() {
 
 // ---- Todo: Stats helper ----
 function updateTodoStats() {
-  // Count tasks done in the todo list as "today tasks"
-  const doneToday = state.todos.filter(t => t.done).length;
-  state.stats.todayTasks = doneToday;
-  state.stats.totalTasks = doneToday; // For simplicitly, total is same (re-count)
-  // Actually, totalTasks should accumulate. Let's track properly.
-  // We'll store totalTasks separately and only increment when a task is completed.
-  // But since we're using a simple approach, just recalculate from ever-completed count.
-  // Let's recalculate totalTasks from a separate accumulated counter.
-  // We'll store totalTasksDoneAccum in stats.
-  // Actually the simpler approach: totalTasks = todayTasks (since we don't have history).
-  // But for a real app, we'd accumulate. Let me fix this properly.
-  // I'll store totalTasksAccum in stats and increment.
+  const doneCount = state.todos.filter(t => t.done).length;
+  // Track how many tasks are done today
+  state.stats.todayTasks = doneCount;
+  // For all-time total: we store a separate accumulation counter
+  // totalTasks is the peak value of todayTasks seen (capped at current)
+  if (!state.stats._tasksAccum) state.stats._tasksAccum = state.stats.totalTasks;
+  // Update the accumulated total if new tasks were completed
+  if (doneCount > state.stats._tasksAccum) {
+    state.stats._tasksAccum = doneCount;
+  }
+  state.stats.totalTasks = Math.max(state.stats._tasksAccum, doneCount);
+  updateStatsDisplay();
   saveState();
 }
 

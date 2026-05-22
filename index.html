@@ -28,7 +28,17 @@
   --font-sans: 'Inter', -apple-system, sans-serif;
   --max-width: 1200px;
   --ring-size: 260px;
-  --ring-stroke: 2px;
+  --ring-stroke: 3px;
+}
+
+/* ---------- Active timer pulse ---------- */
+.timer-running .timer-ring-wrap {
+  box-shadow: 0 0 0 1px var(--border);
+  animation: borderPulse 2s ease-in-out infinite;
+}
+@keyframes borderPulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--border); }
+  50% { box-shadow: 0 0 0 2px var(--border-hover); }
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -187,6 +197,25 @@ body {
 }
 .timer-mode.break-mode { color: var(--break); }
 
+.timer-session-info {
+  font-size: 0.65rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.15em;
+  margin-top: 0.25rem;
+}
+
+.timer-sound-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.6rem;
+  color: var(--fg-muted);
+  letter-spacing: 0.1em;
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.4rem;
+}
+.timer-sound-indicator.on { color: var(--fg); border-color: var(--fg-dim); }
+
 .timer-controls {
   display: flex;
   gap: 0;
@@ -319,10 +348,10 @@ body {
   font-size: 0.85rem;
   padding: 0.25rem 0.5rem;
   transition: color 0.15s ease;
-  opacity: 0;
+  opacity: 0.5;
 }
 .todo-item:hover .todo-delete-btn { opacity: 1; }
-.todo-delete-btn:hover { color: var(--danger); }
+.todo-delete-btn:hover { color: var(--danger); opacity: 1; }
 
 .todo-footer {
   display: flex;
@@ -505,7 +534,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--fg-muted);
   letter-spacing: 0.1em;
 }
@@ -567,6 +596,7 @@ body {
     <div class="g">
       <div class="gc timer-display-cell">
         <div class="timer-ring-wrap" id="progressRingWrapper">
+          <span class="timer-sound-indicator" id="soundIndicator" title="Sound enabled">SND</span>
           <svg viewBox="0 0 200 200" aria-hidden="true">
             <circle class="timer-ring-bg" cx="100" cy="100" r="90"/>
             <circle class="timer-ring-fg" id="progressRingFg" cx="100" cy="100" r="90" stroke-dasharray="565.48" stroke-dashoffset="0"/>
@@ -574,11 +604,13 @@ body {
           <div class="timer-readout">
             <span class="timer-time" id="timerDisplay">25:00</span>
             <span class="timer-mode" id="timerMode">FOCUS</span>
+            <span class="timer-session-info" id="timerSessionInfo">SESSION 0</span>
           </div>
         </div>
         <div class="timer-controls">
-          <button type="button" class="btn btn-primary" id="timerStartPause" aria-label="Start or pause timer">▶ START</button>
-          <button type="button" class="btn" id="timerReset" aria-label="Reset timer">↺ RESET</button>
+          <button type="button" class="btn btn-primary" id="timerStartPause" aria-label="Start or pause timer">START</button>
+          <button type="button" class="btn" id="timerSkip" aria-label="Skip to next phase">SKIP</button>
+          <button type="button" class="btn btn-danger" id="timerReset" aria-label="Reset timer">RESET</button>
         </div>
       </div>
     </div>
@@ -888,6 +920,11 @@ function updateTimerDisplay() {
   timerMode.textContent = isFocus ? 'FOCUS' : 'BREAK';
   timerMode.classList.toggle('break-mode', !isFocus);
   setRingMode(!isFocus);
+
+  const sessionEl = document.getElementById('timerSessionInfo');
+  if (sessionEl) {
+    sessionEl.textContent = `SESSION ${state.stats.todaySessions}`;
+  }
 }
 
 function tick() {
@@ -913,8 +950,9 @@ function startTimer() {
   if (state.running || state.ringing) return;
   state.running = true;
   state.lastTick = Date.now();
-  timerStartPause.textContent = '⏸ PAUSE';
+  timerStartPause.textContent = 'PAUSE';
   timerStartPause.setAttribute('aria-label', 'Pause timer');
+  progressRingWrapper.classList.add('timer-running');
   state.rafId = requestAnimationFrame(tick);
 }
 
@@ -925,8 +963,9 @@ function pauseTimer() {
     cancelAnimationFrame(state.rafId);
     state.rafId = null;
   }
-  timerStartPause.textContent = '▶ START';
+  timerStartPause.textContent = 'START';
   timerStartPause.setAttribute('aria-label', 'Start timer');
+  progressRingWrapper.classList.remove('timer-running');
   saveState();
 }
 
@@ -942,19 +981,44 @@ function resetTimer() {
   }
   state.ringing = false;
   progressRingWrapper.classList.remove('timer-ringing');
+  progressRingWrapper.classList.remove('timer-running');
   state.mode = 'focus';
   state.totalSeconds = state.focusMinutes * 60;
   state.secondsLeft = state.totalSeconds;
   updateTimerDisplay();
-  timerStartPause.textContent = '▶ START';
+  timerStartPause.textContent = 'START';
   timerStartPause.setAttribute('aria-label', 'Start timer');
+  saveState();
+}
+
+function skipTimer() {
+  if (state.ringing) return;
+  if (state.running) {
+    state.running = false;
+    if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
+    progressRingWrapper.classList.remove('timer-running');
+  }
+  state.ringing = false;
+  progressRingWrapper.classList.remove('timer-ringing');
+  if (state.mode === 'focus') {
+    state.mode = 'break';
+    state.totalSeconds = state.breakMinutes * 60;
+  } else {
+    state.mode = 'focus';
+    state.totalSeconds = state.focusMinutes * 60;
+  }
+  state.secondsLeft = state.totalSeconds;
+  timerStartPause.textContent = 'START';
+  timerStartPause.setAttribute('aria-label', 'Start timer');
+  updateTimerDisplay();
   saveState();
 }
 
 function onTimerComplete() {
   state.running = false;
-  timerStartPause.textContent = '▶ START';
+  timerStartPause.textContent = 'START';
   timerStartPause.setAttribute('aria-label', 'Start timer');
+  progressRingWrapper.classList.remove('timer-running');
 
   if (state.mode === 'focus') {
     state.stats.todaySessions++;
@@ -1165,6 +1229,12 @@ function onBreakDurationChange() {
 
 function onSoundToggle() {
   state.soundEnabled = soundToggle.checked;
+  const ind = document.getElementById('soundIndicator');
+  if (ind) {
+    ind.textContent = state.soundEnabled ? 'SND' : 'MUTE';
+    ind.classList.toggle('on', state.soundEnabled);
+    ind.setAttribute('title', state.soundEnabled ? 'Sound enabled' : 'Sound muted');
+  }
   saveState();
 }
 
@@ -1185,12 +1255,14 @@ function init() {
   updateTimerDisplay();
   renderTodos();
   updateStatsDisplay();
+  onSoundToggle();
   saveState();
 }
 
 themeBtn.addEventListener('click', toggleTheme);
 timerStartPause.addEventListener('click', toggleTimer);
 timerReset.addEventListener('click', resetTimer);
+document.getElementById('timerSkip').addEventListener('click', skipTimer);
 todoAddBtn.addEventListener('click', addTodo);
 todoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addTodo(); });
 statsResetBtn.addEventListener('click', resetStats);
